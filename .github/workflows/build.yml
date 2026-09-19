@@ -1,0 +1,33 @@
+name: bridge-ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install (no pywin32 on Linux)
+        run: |
+          pip install -e lib/pdf-markup-core
+          pip install fastapi "uvicorn[standard]" "pydantic>=2" pymupdf pillow httpx pytest
+      - name: Syntax check (bridge imports guarded for non-Windows)
+        run: |
+          python -m py_compile lib/pdf-markup-core/src/pdf_markup_core/*.py
+          python -m py_compile autocad-bridge/src/config.py autocad-bridge/src/models.py autocad-bridge/src/pdf_service.py autocad-bridge/src/markup_executor.py autocad-bridge/src/bridge_main.py
+      - name: Geometry smoke test (pure, no COM/PDF needed)
+        run: |
+          python -c "import sys; sys.path.insert(0,'lib/pdf-markup-core/src/pdf_markup_core'); import geometry; m=geometry.affine_from_3_points([(0,0),(100,0),(0,50)],[(10,20),(110,20),(10,70)]); assert geometry.transform_point(m,(50,25))==(60.0,45.0); print('affine OK:',m)"
+      - name: PowerShell syntax check
+        shell: pwsh
+        run: |
+          $errs=$null; $t=$null
+          [System.Management.Automation.Language.Parser]::ParseFile('scripts/setup-bridge.ps1',[ref]$t,[ref]$errs) | Out-Null
+          if ($errs.Count -gt 0) { $errs | ForEach-Object { Write-Error $_.Message }; exit 1 }
+          Write-Host "setup-bridge.ps1 OK"
