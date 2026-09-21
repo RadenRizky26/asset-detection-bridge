@@ -20,7 +20,7 @@ except ImportError:  # non-Windows dev machines: importable, but unusable
     win32com = None  # type: ignore[assignment]
     _COM_AVAILABLE = False
 
-from .config import settings
+from config import settings
 
 
 def require_com() -> None:

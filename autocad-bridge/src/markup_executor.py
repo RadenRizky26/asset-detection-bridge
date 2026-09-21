@@ -27,9 +27,9 @@ from pdf_markup_core.geometry import (
 )
 from pdf_markup_core.pdf_extract import extract_pdf_annotations
 
-from . import autocad_client as cad
-from .config import settings
-from .models import BridgeExecuteBody, JobStatus
+import autocad_client as cad
+from config import settings
+from models import BridgeExecuteBody, JobStatus
 
 
 @dataclass
